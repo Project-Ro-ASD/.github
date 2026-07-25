@@ -1,0 +1,178 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Project-Ro-ASD/.github/blob/main/contracts/component-artifact-manifest-v1.schema.json",
+  "title": "Ro-ASD Component Artifact Manifest v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "component",
+    "source",
+    "build",
+    "artifacts"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "component-artifact-manifest-v1"
+    },
+    "component": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "version"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9+.-]*$"
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "repository",
+        "commit",
+        "tag",
+        "release_url"
+      ],
+      "properties": {
+        "repository": {
+          "type": "string",
+          "pattern": "^https://github\\.com/Project-Ro-ASD/[A-Za-z0-9_.-]+$"
+        },
+        "commit": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}$"
+        },
+        "tag": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^v[0-9][0-9A-Za-z.+_-]*$"
+        },
+        "release_url": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^https://github\\.com/Project-Ro-ASD/[A-Za-z0-9_.-]+/releases/tag/.+$"
+        }
+      }
+    },
+    "build": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "fedora_release",
+        "workflow_run_id",
+        "workflow_run_url",
+        "builder_image"
+      ],
+      "properties": {
+        "kind": {
+          "enum": [
+            "ci",
+            "release"
+          ]
+        },
+        "fedora_release": {
+          "const": 44
+        },
+        "workflow_run_id": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^[0-9]+$"
+        },
+        "workflow_run_url": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^https://github\\.com/Project-Ro-ASD/[A-Za-z0-9_.-]+/actions/runs/[0-9]+$"
+        },
+        "builder_image": {
+          "type": "string",
+          "pattern": "^registry\\.fedoraproject\\.org/fedora:44@sha256:[0-9a-f]{64}$"
+        }
+      }
+    },
+    "artifacts": {
+      "type": "array",
+      "minItems": 2,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "type",
+          "filename",
+          "name",
+          "source_name",
+          "epoch",
+          "version",
+          "release",
+          "arch",
+          "size",
+          "sha256"
+        ],
+        "properties": {
+          "type": {
+            "enum": [
+              "rpm",
+              "srpm"
+            ]
+          },
+          "filename": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9+_.-]+\\.rpm$"
+          },
+          "name": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9+_.-]+$"
+          },
+          "source_name": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9+_.-]+$"
+          },
+          "epoch": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "version": {
+            "type": "string",
+            "minLength": 1
+          },
+          "release": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9+_.~]+\\.fc44$"
+          },
+          "arch": {
+            "enum": [
+              "x86_64",
+              "noarch",
+              "src"
+            ]
+          },
+          "size": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          }
+        }
+      }
+    }
+  }
+}

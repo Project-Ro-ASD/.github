@@ -1,0 +1,21 @@
+{
+  "schema_version": "component-artifact-manifest-v1",
+  "component": {"name": "ro-assist", "version": "0.3.0"},
+  "source": {
+    "repository": "https://github.com/Project-Ro-ASD/ro-Assist",
+    "commit": "0123456789abcdef0123456789abcdef01234567",
+    "tag": "v0.3.0",
+    "release_url": "https://github.com/Project-Ro-ASD/ro-Assist/releases/tag/v0.3.0"
+  },
+  "build": {
+    "kind": "release",
+    "fedora_release": 44,
+    "workflow_run_id": "123456789",
+    "workflow_run_url": "https://github.com/Project-Ro-ASD/ro-Assist/actions/runs/123456789",
+    "builder_image": "registry.fedoraproject.org/fedora:44@sha256:c64fc79f4a12dd4625d8cba9f7d242ac17c823bdeecc6d650234ebbf5f0ca81b"
+  },
+  "artifacts": [
+    {"type": "rpm", "filename": "ro-assist-0.3.0-1.fc44.x86_64.rpm", "name": "ro-assist", "source_name": "ro-assist", "epoch": 0, "version": "0.3.0", "release": "1.fc44", "arch": "x86_64", "size": 102400},
+    {"type": "srpm", "filename": "ro-assist-0.3.0-1.fc44.src.rpm", "name": "ro-assist", "source_name": "ro-assist", "epoch": 0, "version": "0.3.0", "release": "1.fc44", "arch": "src", "size": 51200, "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"}
+  ]
+}
