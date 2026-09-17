@@ -7,13 +7,13 @@ Usage:
   scripts/bootstrap-repository-protection.sh OWNER/REPO
 
 Purpose:
-  Apply the Ro-ASD repository-level protection baseline to a NEW repository.
+  Apply the Ro-ASD repository-level protection baseline to a NEW public repository.
   This is the enforcement fallback for GitHub Free organizations where
   organization-level rulesets are not enforced.
 
 Safety:
   - refuses repositories outside Project-Ro-ASD
-  - refuses archived repositories
+  - refuses archived or non-public repositories
   - refuses repositories whose default branch is already protected
   - never weakens or overwrites existing repository protection
   - adds ro-app-gate only when roasd_type=application
@@ -30,14 +30,17 @@ REPO="$1"
 [[ "$REPO" == Project-Ro-ASD/* ]] || fail "repository must be under Project-Ro-ASD"
 
 command -v gh >/dev/null 2>&1 || fail "GitHub CLI (gh) is required"
+command -v jq >/dev/null 2>&1 || fail "jq is required"
 gh auth status >/dev/null 2>&1 || fail "gh is not authenticated; run: gh auth login"
 
 REPO_JSON="$(gh api "repos/${REPO}")"
 ARCHIVED="$(jq -r '.archived' <<<"$REPO_JSON")"
+VISIBILITY="$(jq -r '.visibility // empty' <<<"$REPO_JSON")"
 DEFAULT_BRANCH="$(jq -r '.default_branch // empty' <<<"$REPO_JSON")"
 ROASD_TYPE="$(jq -r '.custom_properties.roasd_type // "unclassified"' <<<"$REPO_JSON")"
 
 [[ "$ARCHIVED" == "false" ]] || fail "repository is archived"
+[[ "$VISIBILITY" == "public" ]] || fail "free-plan bootstrap v1 only supports public repositories"
 [[ -n "$DEFAULT_BRANCH" ]] || fail "repository has no default branch"
 
 if gh api "repos/${REPO}/branches/${DEFAULT_BRANCH}/protection" >/dev/null 2>&1; then
