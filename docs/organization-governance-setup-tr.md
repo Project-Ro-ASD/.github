@@ -1,9 +1,7 @@
 # Project-Ro-ASD Organization Governance Setup
 
-Bu belge GitHub Organization UI uzerinden bir defa uygulanacak repository governance
-ayarlarini tanimlar. Organization administration endpoint'leri mevcut ChatGPT GitHub
-baglantisi tarafindan yazilabilir olmadigi icin bu kisim organization owner tarafindan
-manuel uygulanir.
+Bu belge organization-level canonical policy ile GitHub Free uzerindeki gercek
+repository-level enforcement modelini birlikte tanimlar.
 
 ## A. Custom property
 
@@ -13,33 +11,30 @@ GitHub:
       -> Settings
       -> Repository / Custom properties
 
-Yeni property:
+Property:
 
     Name: roasd_type
     Type: Single select
-    Required: tercih edilirse ON
+    Required: ON
     Default: unclassified
 
 Allowed values:
 
     unclassified
     application
+    component
     kernel
     infrastructure
     distribution
     repository
     template
 
-Ilk atamalar icin `docs/repository-classification-v1-tr.md` kullanilir.
+Repository actors property degerini degistiremez. Explicit user-specified value
+zorunlulugu kapali tutulur; default `unclassified` fail-safe degeridir.
+
+Canonical atamalar icin `docs/repository-classification-v1-tr.md` kullanilir.
 
 ## B. Ro-ASD Common Baseline ruleset
-
-GitHub:
-
-    Project-Ro-ASD
-      -> Settings
-      -> Repository rulesets
-      -> New branch ruleset
 
 Name:
 
@@ -51,7 +46,7 @@ Enforcement:
 
 Target repositories:
 
-    Tum normal Project-Ro-ASD repository'leri.
+    Tum Project-Ro-ASD repository'leri
 
 Target branches:
 
@@ -72,13 +67,15 @@ Pull request policy (single-maintainer):
 
 Required status checks:
 
-    COMMON RULESET'E EKLEME.
-
-Neden: CI context isimleri repo tipine gore degisir.
+    Common Baseline'a eklenmez.
 
 Bypass:
 
-    Normal gelistirme icin bypass tanimlama.
+    Normal gelistirme icin bypass tanimlanmaz.
+
+Not: Organization-level ruleset canonical policy tanimidir. Mevcut GitHub Free
+planinda organization ruleset enforcement'i aktif olmadigi icin public repository'lerde
+gercek enforcement repository-level branch protection ile yapilir.
 
 ## C. Ro-ASD Application Baseline ruleset
 
@@ -88,7 +85,7 @@ Name:
 
 Enforcement:
 
-    Active
+    Disabled (migration tamamlanana kadar)
 
 Target repositories:
 
@@ -103,91 +100,128 @@ Required status check hedefi:
 
     ro-app-gate
 
-NOT: `ro-app-gate` ancak application template/repository'lerinde ayni isimde gercek
-CI job'u oldugunda enforce edilmelidir. Template hazir olmadan bu required check'i
-aktiflestirmek yeni/current application repolarini kilitleyebilir.
+Branch up-to-date requirement:
 
-Dolayisiyla uygulama sirasi:
+    ON
 
-    1. ro-app-template hazirla
-    2. application repolarinda ro-app-gate workflow contract'ini uygula
-    3. CI'in gercekten context urettigini dogrula
-    4. sonra Application Baseline'da required check olarak etkinlestir
+Bu ruleset existing application repository migration'i tamamlandiktan ve org plan
+enforcement desteklediginde Active edilebilir. GitHub Free public application
+repository'lerde ayni `ro-app-gate` requirement repository-level protection bootstrap
+tarafindan gercekten enforce edilir.
 
-## D. Kernel Baseline
+## D. GitHub Free repository-level enforcement
 
-v1'de yalniz type sinifi tanimlanir.
+Canonical script:
+
+    scripts/bootstrap-repository-protection.sh Project-Ro-ASD/REPO
+
+Bu script yeni public repository'ler icindir.
+
+Uyguladigi minimum policy:
+
+    PR required: ON
+    required approvals: 0
+    admins enforced: ON
+    force pushes: OFF
+    deletion: OFF
+
+`roasd_type=application` ise ek olarak:
+
+    required status: ro-app-gate
+    strict/up-to-date: ON
+
+Safety:
+
+- Project-Ro-ASD disindaki repository'leri reddeder,
+- archived/private repository'leri reddeder,
+- default branch yoksa durur,
+- default branch zaten protected ise overwrite etmeyi reddeder.
+
+Bu nedenle existing Phase 1 protected producer repository'lerinde korumayi degistirmek
+icin bu script kullanilmaz.
+
+## E. Kernel / Component baseline
+
+Kernel:
 
     roasd_type = kernel
 
-Kernel-specific CI contract kesinlesmeden required status check eklenmez.
-Application Baseline kernel repolarina uygulanmaz.
+Component:
 
-## E. Organization security baseline
+    roasd_type = component
 
-GitHub plan/UI destekliyorsa:
+v1'de bu iki sinif icin ortak required status check tanimlanmaz. Application Baseline
+bu repository'lere uygulanmaz.
 
-    Project-Ro-ASD
-      -> Settings
-      -> Advanced Security
-      -> Configurations
+## F. Organization security baseline
 
-Configuration name:
-
-    Ro-ASD Security Baseline
-
-Hedefler:
+Public repository'ler icin hedef:
 
     Secret Protection / secret scanning: ON
     Push protection: ON
     Dependabot alerts: ON
     Dependabot security updates: ON
 
-Mumkunse yeni repository'ler icin default security configuration yap.
+Code scanning v1 baseline'da zorunlu degildir.
 
-Bu konfigurasyonun repo tipinden bagimsiz uygulanmasi hedeflenir.
+Private repository'lerde GitHub Advanced Security lisansi gerektiren ozellikler
+`Not purchased` donerse bunu enforcement basarisi sayma. Free destekli ozellikler
+ayrica uygulanir/audit edilir.
 
-## F. Existing producer repositories
+## G. Existing producer repositories
 
-Mevcut Ro-Repo/ro-Control/ro-Assist/Ro-Theme repository-level ruleset'leri Phase 1
-sirasinda repo-specific CI check isimleriyle olusturulmustur. Organization baseline
-kurulurken bunlari silme veya gevsetme.
+Mevcut `Ro-Repo`, `ro-Control`, `ro-Assist`, `Ro-Theme` repository-level ruleset'leri
+Phase 1 sirasinda repo-specific CI check isimleriyle olusturulmustur.
 
-Yeni common ruleset bunlarin uzerine ortak policy katmani olarak gelsin.
-Repo-specific CI ruleset'leri migration tamamlanana kadar korunur.
+Bunlari silme, gevsetme veya bootstrap script ile overwrite etme.
+Application migration gerekli oldugunda branch -> PR -> CI -> merge ile yeni
+`ro-app-gate` interface'i eklenir; mevcut protection ancak ayrica review edilerek
+guncellenir.
 
-## G. ro-app-template
+## H. ro-app-template
 
-Yeni repository:
+Repository:
 
     Project-Ro-ASD/ro-app-template
 
-GitHub repository setting:
+Settings:
 
     Template repository: ON
-
-Custom property:
-
     roasd_type = template
 
-Bu repo application kod/release iskeletini tasir; production trust vermez.
+Template application CI/release iskeletini tasir; production trust vermez.
 
-## H. Dogrulama
+Yeni application baslatma akisi:
 
-Organization setup tamamlandiktan sonra yeni gecici/gercek bir application repo ile
-su davranislar dogrulanir:
+    Use this template
+      -> Project-Ro-ASD organization altinda repo olustur
+      -> roasd_type=application
+      -> .roasd/app.json placeholder'larini doldur
+      -> tools/project-ci gercek build/test/lint hook'u yap
+      -> tools/build-rpm gercek Fedora 44 RPM hook'u yap
+      -> repository-level protection bootstrap uygula
+      -> PR ac
+      -> ro-app-gate green olmadan merge etme
 
-1. `roasd_type=application` secildiginde Common + Application ruleset gorunuyor mu?
-2. Default branch deletion engelleniyor mu?
-3. Force push engelleniyor mu?
-4. PR required mi?
-5. Security baseline uygulanmis mi?
-6. `ro-app-gate` gercek CI context'i olusturduktan sonra required check calisiyor mu?
+Resmi package producer olacaksa ayrica `Ro-Repo/config/producers-v1.yaml` onboarding
+PR'i gerekir.
 
-Kernel testinde:
+## I. Dogrulama
 
-1. `roasd_type=kernel` Common Baseline aliyor mu?
-2. Application Baseline uygulanmiyor mu?
-3. `ro-app-gate` kernel repo icin required hale gelmiyor mu?
+Application smoke test icin `Project-Ro-ASD/ro-app-smoke-test` kullanildi.
+Dogrulanan davranislar:
 
-Bu kontroller gecmeden repository governance v1 CLOSED sayilmaz.
+- template placeholder'lari ile CI fail closed,
+- metadata + project CI hook konfigure edilince `ro-app-contract` green,
+- `ro-app-project-ci` green,
+- `ro-app-gate` green,
+- repository-level branch protection uygulandi,
+- `main` protected,
+- required status context `ro-app-gate`.
+
+Governance v1 CLOSED olmadan once ayrica:
+
+1. existing application repository migration durumu audit edilir,
+2. security baseline audit edilir,
+3. representative application repo'da direct main push reddi teyit edilir,
+4. representative kernel/component repo'da `ro-app-gate` zorunlu olmadigi teyit edilir.
